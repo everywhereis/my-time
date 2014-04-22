@@ -1,21 +1,19 @@
 package com.qvdev.apps.everywhereis;
 
-import android.app.Activity;
-
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.content.Context;
-import android.os.Build;
+import android.database.Cursor;
 import android.os.Bundle;
-import android.view.Gravity;
+import android.provider.CallLog;
+import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.support.v4.widget.DrawerLayout;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 
@@ -130,11 +128,28 @@ public class MainActivity extends Activity
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                Bundle savedInstanceState) {
+                                 Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
             TextView textView = (TextView) rootView.findViewById(R.id.section_label);
             textView.setText(Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
+            fetchCallLog();
             return rootView;
+        }
+
+        private void fetchCallLog() {
+            Cursor c = getActivity().getContentResolver().query(CallLog.Calls.CONTENT_URI, null, null,
+                    null, CallLog.Calls.DEFAULT_SORT_ORDER);
+
+            Log.d(getClass().getSimpleName(), "Count::" + (c == null ? 0 : c.getCount()));
+            int nrPos = c.getColumnIndex("number");
+            int datePos = c.getColumnIndex("date");
+
+            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                Log.d(getClass().getSimpleName(), "CALL::" + c.getString(nrPos) + " DATE::" + c.getString(datePos));
+            }
+
+            c.close();
+
         }
 
         @Override
