@@ -5,8 +5,10 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.CallLog;
+import android.provider.MediaStore;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -132,7 +134,7 @@ public class MainActivity extends Activity
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
             TextView textView = (TextView) rootView.findViewById(R.id.section_label);
             textView.setText(Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
-            fetchCallLog();
+            fecthImages();
             return rootView;
         }
 
@@ -149,6 +151,41 @@ public class MainActivity extends Activity
             }
 
             c.close();
+
+        }
+
+        private void fetchTextMessages()
+        {
+            Uri allMessages = Uri.parse("content://sms/");
+            Cursor cursor = getActivity().getContentResolver().query(allMessages, null,
+                    null, null, null);
+
+            while (cursor.moveToNext()) {
+                for (int i = 0; i < cursor.getColumnCount(); i++) {
+                    Log.d(getClass().getSimpleName(), cursor.getColumnName(i) + "::" + cursor.getString(i) + "");
+                }
+            }
+        }
+
+        private void fecthImages()
+        {
+
+            final String[] imageColumns = {
+                    MediaStore.Images.Media._ID, MediaStore.Images.Media.DATE_TAKEN
+            };
+            final String imageOrderBy = MediaStore.Images.Media._ID + " DESC";
+            Cursor imageCursor = getActivity().getContentResolver().query(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI, imageColumns, null, null,
+                    imageOrderBy);
+            imageCursor.moveToFirst();
+            do {
+                String fullPath = imageCursor.getString(imageCursor
+                        .getColumnIndex(MediaStore.Images.Media.DATE_TAKEN));
+                Log.d(getClass().getSimpleName(), fullPath);
+            } while (imageCursor.moveToNext());
+
+
+
 
         }
 
