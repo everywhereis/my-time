@@ -2,8 +2,8 @@ package com.qvdev.apps.everywhereis;
 
 import android.app.ActionBar;
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.FragmentManager;
+import android.app.ListFragment;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,7 +16,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 
 public class MainActivity extends Activity
@@ -106,7 +110,7 @@ public class MainActivity extends Activity
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class PlaceholderFragment extends ListFragment {
         /**
          * The fragment argument representing the section number for this
          * fragment.
@@ -132,30 +136,54 @@ public class MainActivity extends Activity
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
-            fecthImages();
+
+            createMockData();
+
             return rootView;
         }
 
-        private void fetchCallLog() {
+        private void createMockData() {
+            LayoutInflater inflater = LayoutInflater.from(getActivity());
+
+            List<EventItem> items = new ArrayList<EventItem>();
+            fetchCallLog(items);
+
+            EventListAdapter adapter = new EventListAdapter(getActivity(), inflater, items);
+            setListAdapter(adapter);
+        }
+
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+            ((MainActivity) activity).onSectionAttached(
+                    getArguments().getInt(ARG_SECTION_NUMBER));
+        }
+
+
+        private void fetchCallLog(List<EventItem> items) {
             Cursor c = getActivity().getContentResolver().query(CallLog.Calls.CONTENT_URI, null, null,
                     null, CallLog.Calls.DEFAULT_SORT_ORDER);
 
             Log.d(getClass().getSimpleName(), "Count::" + (c == null ? 0 : c.getCount()));
-            int nrPos = c.getColumnIndex("number");
+            int nrPos = c.getColumnIndex("name");
             int datePos = c.getColumnIndex("date");
 
+            SimpleDateFormat formatter = new SimpleDateFormat(
+                    "dd-MMM-yyyy HH:mm");
+
             for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                Log.d(getClass().getSimpleName(), "CALL::" + c.getString(nrPos) + " DATE::" + c.getString(datePos));
+                String dateString = formatter.format(new Date(Long
+                        .parseLong(c.getString(datePos))));
+
+                Log.d(getClass().getSimpleName(), "CALL::" + c.getString(nrPos) + " DATE::" + dateString);
+                items.add(new CallEventItem(c.getString(nrPos), dateString));
             }
 
             c.close();
 
         }
 
-        private void fetchTextMessages()
-        {
+        private void fetchTextMessages() {
             Uri allMessages = Uri.parse("content://sms/");
             Cursor cursor = getActivity().getContentResolver().query(allMessages, null,
                     null, null, null);
@@ -167,8 +195,7 @@ public class MainActivity extends Activity
             }
         }
 
-        private void fecthImages()
-        {
+        private void fecthImages() {
 
             final String[] imageColumns = {
                     MediaStore.Images.Media._ID, MediaStore.Images.Media.DATE_TAKEN
@@ -185,16 +212,8 @@ public class MainActivity extends Activity
             } while (imageCursor.moveToNext());
 
 
-
-
         }
 
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            ((MainActivity) activity).onSectionAttached(
-                    getArguments().getInt(ARG_SECTION_NUMBER));
-        }
     }
 
 }
