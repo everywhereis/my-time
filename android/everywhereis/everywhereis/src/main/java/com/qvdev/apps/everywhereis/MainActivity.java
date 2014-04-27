@@ -150,6 +150,7 @@ public class MainActivity extends Activity
             fetchCallLog(items);
             fetchImages(items);
             fetchTextMessages(items);
+            fetchVideo(items);
 
             EventListAdapter adapter = new EventListAdapter(getActivity(), inflater, items);
             setListAdapter(adapter);
@@ -193,6 +194,16 @@ public class MainActivity extends Activity
             return selectionArgs;
         }
 
+        private String prettyDate(String epochTime) {
+            SimpleDateFormat formatter = new SimpleDateFormat(
+                    "dd-MMM-yyyy HH:mm");
+
+            String prettyDate = formatter.format(new Date(Long
+                    .parseLong(epochTime)));
+
+            return prettyDate;
+        }
+
         private void fetchCallLog(List<EventItem> items) {
 
 
@@ -217,16 +228,6 @@ public class MainActivity extends Activity
 
             c.close();
 
-        }
-
-        private String prettyDate(String epochTime) {
-            SimpleDateFormat formatter = new SimpleDateFormat(
-                    "dd-MMM-yyyy HH:mm");
-
-            String prettyDate = formatter.format(new Date(Long
-                    .parseLong(epochTime)));
-
-            return prettyDate;
         }
 
         private void fetchTextMessages(List<EventItem> items) {
@@ -274,6 +275,31 @@ public class MainActivity extends Activity
                         .getColumnIndex(MediaStore.Images.Media._ID));
                 String date = prettyDate(imageCursor.getString(imageCursor
                         .getColumnIndex(MediaStore.Images.Media.DATE_TAKEN)));
+                Log.d(getClass().getSimpleName(), id);
+
+                items.add(new CallEventItem(id, date));
+            }
+        }
+
+        private void fetchVideo(List<EventItem> items) {
+
+            final String[] imageColumns = {
+                    MediaStore.Video.Media._ID, MediaStore.Video.Media.DATE_TAKEN
+            };
+
+            final String imageOrderBy = MediaStore.Video.Media._ID + " DESC";
+            Cursor imageCursor = getActivity().getContentResolver().query(
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                    imageColumns,
+                    MediaStore.Video.Media.DATE_TAKEN + ">? AND " + MediaStore.Video.Media.DATE_TAKEN + "<?",
+                    getSelectionArgs(),
+                    imageOrderBy);
+
+            for (imageCursor.moveToFirst(); !imageCursor.isAfterLast(); imageCursor.moveToNext()) {
+                String id = imageCursor.getString(imageCursor
+                        .getColumnIndex(MediaStore.Video.Media._ID));
+                String date = prettyDate(imageCursor.getString(imageCursor
+                        .getColumnIndex(MediaStore.Video.Media.DATE_TAKEN)));
                 Log.d(getClass().getSimpleName(), id);
 
                 items.add(new CallEventItem(id, date));
