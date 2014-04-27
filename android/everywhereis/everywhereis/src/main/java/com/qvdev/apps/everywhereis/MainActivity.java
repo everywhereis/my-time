@@ -148,6 +148,8 @@ public class MainActivity extends Activity
 
             List<EventItem> items = new ArrayList<EventItem>();
             fetchCallLog(items);
+            fetchImages(items);
+            fetchTextMessages(items);
 
             EventListAdapter adapter = new EventListAdapter(getActivity(), inflater, items);
             setListAdapter(adapter);
@@ -204,13 +206,9 @@ public class MainActivity extends Activity
             int nrPos = c.getColumnIndex("name");
             int datePos = c.getColumnIndex("date");
 
-            SimpleDateFormat formatter = new SimpleDateFormat(
-                    "dd-MMM-yyyy HH:mm");
-
 
             for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                String dateString = formatter.format(new Date(Long
-                        .parseLong(c.getString(datePos))));
+                String dateString = prettyDate(c.getString(datePos));
 
                 Log.d(getClass().getSimpleName(), /*"CALL::" + c.getString(nrPos) + */" DATE::" + c.getString(datePos));
                 items.add(new CallEventItem(c.getString(nrPos), dateString));
@@ -221,35 +219,65 @@ public class MainActivity extends Activity
 
         }
 
-        private void fetchTextMessages() {
-            Uri allMessages = Uri.parse("content://sms/");
-            Cursor cursor = getActivity().getContentResolver().query(allMessages, null,
-                    null, null, null);
+        private String prettyDate(String epochTime) {
+            SimpleDateFormat formatter = new SimpleDateFormat(
+                    "dd-MMM-yyyy HH:mm");
 
-            while (cursor.moveToNext()) {
-                for (int i = 0; i < cursor.getColumnCount(); i++) {
-                    Log.d(getClass().getSimpleName(), cursor.getColumnName(i) + "::" + cursor.getString(i) + "");
-                }
+            String prettyDate = formatter.format(new Date(Long
+                    .parseLong(epochTime)));
+
+            return prettyDate;
+        }
+
+        private void fetchTextMessages(List<EventItem> items) {
+            Uri allMessages = Uri.parse("content://sms/");
+            Cursor cursor = getActivity().getContentResolver().query(allMessages,
+                    null,
+                    CallLog.Calls.DATE + ">? AND " + CallLog.Calls.DATE + "<?",
+                    getSelectionArgs(),
+                    null);
+
+
+            for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                String date = prettyDate(cursor.getString(cursor
+                        .getColumnIndex("date")));
+                Log.d(getClass().getSimpleName(), "DATE::" + date);
+
+                String body = cursor.getString(cursor
+                        .getColumnIndex("body"));
+                Log.d(getClass().getSimpleName(), "BODY::" + body);
+
+                String address = cursor.getString(cursor
+                        .getColumnIndex("address"));
+                Log.d(getClass().getSimpleName(), "ADDRESS::" + address);
+
+                items.add(new CallEventItem(address, date));
             }
         }
 
-        private void fecthImages() {
+        private void fetchImages(List<EventItem> items) {
 
             final String[] imageColumns = {
                     MediaStore.Images.Media._ID, MediaStore.Images.Media.DATE_TAKEN
             };
+
             final String imageOrderBy = MediaStore.Images.Media._ID + " DESC";
             Cursor imageCursor = getActivity().getContentResolver().query(
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI, imageColumns, null, null,
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    imageColumns,
+                    MediaStore.Images.Media.DATE_TAKEN + ">? AND " + MediaStore.Images.Media.DATE_TAKEN + "<?",
+                    getSelectionArgs(),
                     imageOrderBy);
-            imageCursor.moveToFirst();
-            do {
-                String fullPath = imageCursor.getString(imageCursor
-                        .getColumnIndex(MediaStore.Images.Media.DATE_TAKEN));
-                Log.d(getClass().getSimpleName(), fullPath);
-            } while (imageCursor.moveToNext());
 
+            for (imageCursor.moveToFirst(); !imageCursor.isAfterLast(); imageCursor.moveToNext()) {
+                String id = imageCursor.getString(imageCursor
+                        .getColumnIndex(MediaStore.Images.Media._ID));
+                String date = prettyDate(imageCursor.getString(imageCursor
+                        .getColumnIndex(MediaStore.Images.Media.DATE_TAKEN)));
+                Log.d(getClass().getSimpleName(), id);
 
+                items.add(new CallEventItem(id, date));
+            }
         }
 
     }
