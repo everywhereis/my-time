@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -160,9 +161,44 @@ public class MainActivity extends Activity
         }
 
 
+        private String[] getSelectionArgs() {
+
+            Calendar cal = Calendar.getInstance();
+
+
+            cal.setTime(new Date()); // compute start of the day for the timestamp
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+
+
+            Date startDate = new Date();
+            startDate.setTime(cal.getTimeInMillis());
+
+
+            cal.set(Calendar.HOUR_OF_DAY, 23);
+            cal.set(Calendar.MINUTE, 59);
+            cal.set(Calendar.SECOND, 59);
+            Date endDate = new Date();
+
+
+            Log.d(getClass().getSimpleName(), "DAY::" + String.valueOf(startDate.getTime()) + " END::" + String.valueOf(endDate.getTime()));
+
+            String[] selectionArgs = new String[]{String.valueOf(startDate.getTime()), String.valueOf(endDate.getTime())};
+
+
+            return selectionArgs;
+        }
+
         private void fetchCallLog(List<EventItem> items) {
-            Cursor c = getActivity().getContentResolver().query(CallLog.Calls.CONTENT_URI, null, null,
-                    null, CallLog.Calls.DEFAULT_SORT_ORDER);
+
+
+            Cursor c = getActivity().getContentResolver().query(CallLog.Calls.CONTENT_URI,
+                    null,
+                    CallLog.Calls.DATE + ">? AND " + CallLog.Calls.DATE + "<?",
+                    getSelectionArgs(),
+                    CallLog.Calls.DEFAULT_SORT_ORDER);
 
             Log.d(getClass().getSimpleName(), "Count::" + (c == null ? 0 : c.getCount()));
             int nrPos = c.getColumnIndex("name");
@@ -171,12 +207,14 @@ public class MainActivity extends Activity
             SimpleDateFormat formatter = new SimpleDateFormat(
                     "dd-MMM-yyyy HH:mm");
 
+
             for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
                 String dateString = formatter.format(new Date(Long
                         .parseLong(c.getString(datePos))));
 
-                Log.d(getClass().getSimpleName(), "CALL::" + c.getString(nrPos) + " DATE::" + dateString);
+                Log.d(getClass().getSimpleName(), /*"CALL::" + c.getString(nrPos) + */" DATE::" + c.getString(datePos));
                 items.add(new CallEventItem(c.getString(nrPos), dateString));
+
             }
 
             c.close();
