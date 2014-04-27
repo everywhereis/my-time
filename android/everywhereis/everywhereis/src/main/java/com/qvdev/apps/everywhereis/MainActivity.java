@@ -252,7 +252,7 @@ public class MainActivity extends Activity
                         .getColumnIndex("address"));
                 Log.d(getClass().getSimpleName(), "ADDRESS::" + address);
 
-                items.add(new CallEventItem(address, date));
+                items.add(new TextEventItem(address, date));
             }
         }
 
@@ -277,7 +277,7 @@ public class MainActivity extends Activity
                         .getColumnIndex(MediaStore.Images.Media.DATE_TAKEN)));
                 Log.d(getClass().getSimpleName(), id);
 
-                items.add(new CallEventItem(id, date));
+                items.add(new PhotoEventItem(id, date));
             }
         }
 
@@ -302,7 +302,7 @@ public class MainActivity extends Activity
                         .getColumnIndex(MediaStore.Video.Media.DATE_TAKEN)));
                 Log.d(getClass().getSimpleName(), id);
 
-                items.add(new CallEventItem(id, date));
+                items.add(new VideoEventItem(id, date));
             }
         }
 
